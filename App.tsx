@@ -70,12 +70,17 @@ const App: React.FC = () => {
       const techs = await loadTechniciansFromCloud();
       setTechnicians(techs);
 
-      // Check if this person already has a profile (match by name, case-insensitive)
-      const existing = techs.find(t => t.name.toLowerCase() === name.trim().toLowerCase());
+      // Check if this person already has a profile (match by email, case-insensitive)
+      const existing = techs.find(t => t.email?.toLowerCase() === email.trim().toLowerCase());
       if (existing) {
-        // Already registered — set as active tech
+        // Already registered — set as active tech, update name if it changed
         setActiveTechId(existing.id);
         localStorage.setItem('3dts_active_tech_id', existing.id);
+        if (existing.name !== name.trim()) {
+          // Update their name in case they used initials before
+          const { updateTechnician } = await import('./services/dataService');
+          await updateTechnician(existing.id, { name: name.trim() });
+        }
       } else {
         // New technician — auto-create profile
         const newTech = await createTechAPI(name.trim(), email);
