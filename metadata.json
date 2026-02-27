@@ -1,0 +1,8 @@
+{
+  "name": "3D Tech Technician Evaluator",
+  "description": "A comprehensive evaluation tool for technicians across five core systems: Security, Cabling, AV, Fire/Life Safety, and Networking, featuring 200+ questions ranging from Beginner to Expert Journeyman.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
