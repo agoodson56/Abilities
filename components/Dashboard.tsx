@@ -75,7 +75,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onStart, libraryStats, activeTech
                   Competency: <span className="font-semibold text-slate-700">{getSubtext(category)}</span>
                 </p>
                 <button className={`mt-auto w-full py-4 px-4 rounded-xl font-black uppercase tracking-widest text-sm text-white transition-all shadow-lg ${SYSTEM_THEMES[category]} hover:brightness-110 active:scale-95 group-hover:-translate-y-1`}>
-                  Begin 50-Point Audit
+                  Begin 40-Point Audit
                 </button>
               </div>
             </div>

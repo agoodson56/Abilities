@@ -9,7 +9,7 @@ interface QuizProps {
   onComplete: (answers: { [key: string]: number }) => void;
 }
 
-const SECONDS_PER_QUESTION = 20;
+const SECONDS_PER_QUESTION = 30;
 
 const Quiz: React.FC<QuizProps> = ({ category, questions, onComplete }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
