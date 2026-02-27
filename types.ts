@@ -38,6 +38,7 @@ export interface EvaluationResult {
   breakdown: {
     [key in Difficulty]: { correct: number; total: number };
   };
+  analysis?: string;
 }
 
 export interface Technician {

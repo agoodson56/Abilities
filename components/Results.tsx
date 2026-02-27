@@ -80,7 +80,8 @@ const Results: React.FC<ResultsProps> = ({ category, questions, answers, onReset
       date: new Date().toISOString(),
       totalQuestions: total,
       level: rank.title,
-      breakdown: breakdown
+      breakdown: breakdown,
+      analysis: analysis || undefined
     });
     setHasSaved(true);
   }, [isAnalyzing, hasSaved, isSaved]);
