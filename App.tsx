@@ -6,11 +6,12 @@ import Dashboard from './components/Dashboard';
 import Quiz from './components/Quiz';
 import Results from './components/Results';
 import ProfileManager from './components/ProfileManager';
+import ManagerReview from './components/ManagerReview';
 import Login from './components/Login';
 import { BRAND_NAME } from './constants';
 
 const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<'login' | 'dashboard' | 'quiz' | 'results' | 'profiles'>('login');
+  const [currentView, setCurrentView] = useState<'login' | 'dashboard' | 'quiz' | 'results' | 'profiles' | 'manager'>('login');
   const [loggedInUser, setLoggedInUser] = useState<{ name: string; email: string } | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<SystemCategory | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -181,6 +182,19 @@ const App: React.FC = () => {
               Tech Profiles
             </button>
 
+            <button
+              onClick={() => setCurrentView('manager')}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-bold transition-all border ${currentView === 'manager'
+                ? 'bg-amber-500 border-amber-400 text-white'
+                : 'bg-slate-800 border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700'
+                }`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Manager Review
+            </button>
+
             {activeTech && (
               <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg">
                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -238,6 +252,9 @@ const App: React.FC = () => {
                 onUpdate={saveTechnicians}
                 onClearLibrary={clearLibrary}
               />
+            )}
+            {currentView === 'manager' && (
+              <ManagerReview technicians={technicians} />
             )}
             {currentView === 'quiz' && selectedCategory && (
               <Quiz
