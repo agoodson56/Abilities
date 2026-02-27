@@ -20,6 +20,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onStart, libraryStats, activeTech
       case SystemCategory.FIRE_LIFE_SAFETY: return "NFPA 72 (2022), Addressable Loop Programming, SLC Logic, OSHA LOTO, AHJ Liaison.";
       case SystemCategory.NETWORKING: return "L2/L3 Hardware Functions, IGMP Querier, PoE++ Budgeting, NIST 800-53, VLAN Trunking.";
       case SystemCategory.DAS: return "CommScope ION-E, JMA MIMO, Corning ONE, Link Budget, FCC Part 90, Public Safety BDA.";
+      case SystemCategory.INTRUSION: return "Bosch B9512G Panels, DS938Z PIR/Microwave, GE Contacts, UL 681, SIA CP-01, Zone Logic.";
       default: return "";
     }
   }
@@ -74,7 +75,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onStart, libraryStats, activeTech
                   Competency: <span className="font-semibold text-slate-700">{getSubtext(category)}</span>
                 </p>
                 <button className={`mt-auto w-full py-4 px-4 rounded-xl font-black uppercase tracking-widest text-sm text-white transition-all shadow-lg ${SYSTEM_THEMES[category]} hover:brightness-110 active:scale-95 group-hover:-translate-y-1`}>
-                  Begin 40-Point Audit
+                  Begin 50-Point Audit
                 </button>
               </div>
             </div>

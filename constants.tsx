@@ -9,6 +9,7 @@ export const SYSTEM_THEMES = {
   [SystemCategory.FIRE_LIFE_SAFETY]: 'bg-red-600',
   [SystemCategory.NETWORKING]: 'bg-green-600',
   [SystemCategory.DAS]: 'bg-teal-600',
+  [SystemCategory.INTRUSION]: 'bg-orange-600',
 };
 
 export const DIFFICULTY_COLORS = {

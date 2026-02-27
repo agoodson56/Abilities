@@ -43,11 +43,15 @@ export const generateQuestionsForCategory = async (
     [SystemCategory.DAS]: `
       - HARDWARE FUNCTIONALITY: CommScope ION-E (Optical to Ethernet conversion, Head-End vs Remote Unit roles), JMA Teko (MIMO antenna configurations, band-specific coverage), Corning ONE (Optical Network Evolution platform, SpiderCloud integration), SOLiD ALLIANCE (DAS Head-End capacity, band pass filtering). Radiating coax (Andrew RADIAX) signal propagation vs discrete antenna placement.
       - OPERATIONAL LOGIC: RF planning with link budget calculations; Understanding Uplink vs Downlink power balancing; Configuring PIM (Passive Intermodulation) testing procedures; Signal source integration (BDA/Signal Boosters vs Small Cells vs Off-Air repeaters); Fiber-to-the-antenna vs Coax distribution architecture decisions.
-      - CODES: NFPA 72 (emergency communication), IBC Section 510/911 (in-building public safety DAS requirements), FCC Part 90 (public safety frequencies 700/800MHz), OSHA 1926 (tower/elevated work), local AHJ requirements for BDA signal boosters.`
+      - CODES: NFPA 72 (emergency communication), IBC Section 510/911 (in-building public safety DAS requirements), FCC Part 90 (public safety frequencies 700/800MHz), OSHA 1926 (tower/elevated work), local AHJ requirements for BDA signal boosters.`,
+    [SystemCategory.INTRUSION]: `
+      - HARDWARE FUNCTIONALITY: Bosch B9512G (48-599 zone commercial panel, SIA CP-01 compliant), Bosch DS938Z (Dual-Tech PIR/Microwave motion detector, anti-mask logic), Bosch DS1101i (Acoustic glass break detector, FlexCore technology), Bosch B920 (Keypad/Arming station, alpha-numeric display), Bosch B450 (IP/Cellular communicator, Contact ID and SIA format). GE 1076-N (Surface-mount door/window contacts). Altronix AL400ULACM (12/24VDC power supply with battery charger).
+      - OPERATIONAL LOGIC: Programming zone types (Instant, Delayed, 24-Hour, Cross-Zone); DEOL vs EOL resistor wiring supervision; Walk test mode procedures; Swinger shutdown logic; Stay/Away/Night arming modes; Event-triggered relay automation (CCTV recording, door locking); Central station report code programming (Contact ID format); Dual-path IP/cellular communication failover.
+      - CODES: UL 681 (Burglar/Holdup Alarm Installation), ANSI/SIA CP-01-2019 (False Alarm Reduction), NFPA 731 (Premises Security), NEC Article 725 (Class 2 Circuits), UL 1076 (Proprietary Alarm Units), OSHA 1910 (General Safety).`
   };
 
   const prompt = `You are the Chief Technical Evaluator at 3D Technology Services. 
-  Generate EXACTLY 40 high-quality technical evaluation questions for the category: ${category}.
+  Generate EXACTLY 50 high-quality technical evaluation questions for the category: ${category}.
   
   CRITICAL OBJECTIVE: 
   You must evaluate the technician's mastery of MANUFACTURE-SPECIFIC HARDWARE and its OPERATIONAL FUNCTION. 
@@ -56,11 +60,11 @@ export const generateQuestionsForCategory = async (
   MANUFACTURER CONTEXT:
   ${systemContexts[category]}
   
-  DIFFICULTY DISTRIBUTION (10 questions per level):
-  1. BEGINNER (Apprentice): Safety (OSHA), identifying manufacturer components, basic connections (T568B), and tool safety.
-  2. INTERMEDIATE (Junior Tech): Software navigation (Logins, Basic Configuration), device discovery, and standard NEC code clearances.
-  3. ADVANCED (Senior Tech): Complex hardware-software interaction logic (Rules/Events), troubleshooting signal anomalies (dB loss, packet drops), and specific NFPA/NEC/OSHA code citations.
-  4. EXPERT JOURNEYMAN (Lead Engineer): System architecture design, advanced commissioning (Federation, DSP Logic, OTDR Analysis), Federal compliance auditing, and project-level engineering decisions.
+  DIFFICULTY DISTRIBUTION (12-13 questions per level, totaling 50):
+  1. BEGINNER (Apprentice) - 13 questions: Safety (OSHA), identifying manufacturer components, basic connections (T568B), and tool safety.
+  2. INTERMEDIATE (Junior Tech) - 13 questions: Software navigation (Logins, Basic Configuration), device discovery, and standard NEC code clearances.
+  3. ADVANCED (Senior Tech) - 12 questions: Complex hardware-software interaction logic (Rules/Events), troubleshooting signal anomalies (dB loss, packet drops), and specific NFPA/NEC/OSHA code citations.
+  4. EXPERT JOURNEYMAN (Lead Engineer) - 12 questions: System architecture design, advanced commissioning (Federation, DSP Logic, OTDR Analysis), Federal compliance auditing, and project-level engineering decisions.
 
   MANDATORY FORMAT:
   - Each question must be a multiple-choice item with 4 distinct options.
@@ -68,11 +72,11 @@ export const generateQuestionsForCategory = async (
   
   CRITICAL - ANSWER POSITION RANDOMIZATION:
   - You MUST distribute correct answers EVENLY across all 4 positions (indices 0, 1, 2, 3).
-  - Out of 40 questions: EXACTLY 10 should have correctAnswerIndex=0, 10 should have correctAnswerIndex=1, 10 should have correctAnswerIndex=2, and 10 should have correctAnswerIndex=3.
+  - Out of 50 questions: approximately 12-13 should have correctAnswerIndex=0, 12-13 should have correctAnswerIndex=1, 12-13 should have correctAnswerIndex=2, and 12-13 should have correctAnswerIndex=3.
   - NEVER put the correct answer in the same position for more than 3 consecutive questions.
   - This is MANDATORY to prevent answer pattern recognition.
   
-  Return as a JSON array of 40 objects.`;
+  Return as a JSON array of 50 objects.`;
 
   // Check if API is configured
   if (!ai) {

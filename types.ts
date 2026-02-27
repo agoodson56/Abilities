@@ -12,7 +12,8 @@ export enum SystemCategory {
   AUDIO_VIDEO = 'Audio & Video Systems',
   FIRE_LIFE_SAFETY = 'Fire/Life Safety Systems',
   NETWORKING = 'Networking',
-  DAS = 'Distributed Antenna Systems'
+  DAS = 'Distributed Antenna Systems',
+  INTRUSION = 'Intrusion Detection'
 }
 
 export interface Question {
