@@ -40,7 +40,15 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({
   };
 
   const handleDeleteTechnician = async (id: string) => {
-    if (confirm("Permanently delete this technician profile and all history?")) {
+    const password = prompt("Enter admin password to delete this technician record:");
+    if (!password) return;
+
+    if (password !== 'G00ds0n') {
+      alert("Incorrect password. Deletion denied.");
+      return;
+    }
+
+    if (confirm("Password verified. Permanently delete this technician profile and all history?")) {
       try {
         await deleteTechAPI(id);
         onRefresh(); // Reload from cloud
