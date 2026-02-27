@@ -167,7 +167,7 @@ export async function onRequestPost(context) {
           },
           body: JSON.stringify({
             from: fromAddr,
-            to: ['agoodson56@gmail.com'],
+            to: ['agoodson@3dtsi.com'],
             subject: `[Evaluation] ${technicianName} - ${category} - ${percentage}% (${level || 'N/A'})`,
             html: emailHtml
           })
