@@ -18,7 +18,6 @@ const App: React.FC = () => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [userAnswers, setUserAnswers] = useState<{ [key: string]: number }>({});
   const [isLoading, setIsLoading] = useState(false);
-  const [libraryStats, setLibraryStats] = useState<{ [key in SystemCategory]?: number }>({});
 
   // Technician State
   const [technicians, setTechnicians] = useState<Technician[]>([]);
@@ -35,18 +34,7 @@ const App: React.FC = () => {
       } catch (e) { }
     }
 
-    // Load Library Stats
-    const stats: { [key in SystemCategory]?: number } = {};
-    Object.values(SystemCategory).forEach(cat => {
-      const saved = localStorage.getItem(`lib_${cat}`);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          stats[cat] = parsed.length;
-        } catch (e) { }
-      }
-    });
-    setLibraryStats(stats);
+
 
     // Load Technicians from cloud API
     loadTechniciansFromCloud().then(techs => {
@@ -118,14 +106,8 @@ const App: React.FC = () => {
     setUserAnswers({});
 
     try {
-      const saved = localStorage.getItem(`lib_${category}`);
-      if (saved) {
-        setQuestions(JSON.parse(saved));
-      } else {
-        const generated = await generateQuestionsForCategory(category);
-        setQuestions(generated);
-        localStorage.setItem(`lib_${category}`, JSON.stringify(generated));
-      }
+      const generated = await generateQuestionsForCategory(category);
+      setQuestions(generated);
       setCurrentView('quiz');
     } catch (error) {
       alert("Error accessing the Memory Library.");
@@ -168,11 +150,8 @@ const App: React.FC = () => {
   };
 
   const clearLibrary = () => {
-    if (confirm("Clear all cached questions from the Memory Library?")) {
-      Object.values(SystemCategory).forEach(cat => localStorage.removeItem(`lib_${cat}`));
-      setLibraryStats({});
-      alert("Library purged.");
-    }
+    // Questions are now bundled — no cache to clear
+    alert("Questions are built-in — no cache to clear.");
   };
 
   const activeTech = technicians.find(t => t.id === activeTechId);
@@ -286,7 +265,7 @@ const App: React.FC = () => {
             {currentView === 'dashboard' && (
               <Dashboard
                 onStart={startEvaluation}
-                libraryStats={libraryStats}
+                libraryStats={{}}
                 activeTech={activeTech || null}
               />
             )}
