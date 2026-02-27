@@ -1,12 +1,14 @@
 
 import React, { useState } from 'react';
 import { Technician } from '../types';
+import { createTechnician as createTechAPI, deleteTechnician as deleteTechAPI, updateTechnician as updateTechAPI } from '../services/dataService';
 
 interface ProfileManagerProps {
   technicians: Technician[];
   activeTechId: string | null;
   onSelect: (id: string | null) => void;
   onUpdate: (techs: Technician[]) => void;
+  onRefresh: () => void;
   onClearLibrary: () => void;
 }
 
@@ -15,50 +17,55 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({
   activeTechId,
   onSelect,
   onUpdate,
+  onRefresh,
   onClearLibrary
 }) => {
   const [newTechName, setNewTechName] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [viewingTechId, setViewingTechId] = useState<string | null>(null);
 
-  const addTechnician = (e: React.FormEvent) => {
+  const addTechnician = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTechName.trim()) return;
 
-    const newTech: Technician = {
-      id: crypto.randomUUID(),
-      name: newTechName.trim(),
-      email: '',
-      results: [],
-      certifications: [],
-      joinedDate: new Date().toISOString(),
-      lastEvaluated: null
-    };
-
-    onUpdate([...technicians, newTech]);
-    setNewTechName('');
-    setShowAddForm(false);
-  };
-
-  const deleteTechnician = (id: string) => {
-    if (confirm("Permanently delete this technician profile and all history?")) {
-      const updated = technicians.filter(t => t.id !== id);
-      onUpdate(updated);
-      if (activeTechId === id) onSelect(null);
-      if (viewingTechId === id) setViewingTechId(null);
+    try {
+      await createTechAPI(newTechName.trim());
+      onRefresh(); // Reload from cloud
+      setNewTechName('');
+      setShowAddForm(false);
+    } catch (err) {
+      console.error('Failed to create technician:', err);
+      alert('Failed to create technician. Please try again.');
     }
   };
 
-  const addCertification = (techId: string) => {
+  const handleDeleteTechnician = async (id: string) => {
+    if (confirm("Permanently delete this technician profile and all history?")) {
+      try {
+        await deleteTechAPI(id);
+        onRefresh(); // Reload from cloud
+        if (activeTechId === id) onSelect(null);
+        if (viewingTechId === id) setViewingTechId(null);
+      } catch (err) {
+        console.error('Failed to delete technician:', err);
+        alert('Failed to delete technician. Please try again.');
+      }
+    }
+  };
+
+  const addCertification = async (techId: string) => {
     const cert = prompt("Enter Certification Name (e.g., Genetec Certified, NFPA 72 Trained):");
     if (cert) {
-      const updated = technicians.map(t => {
-        if (t.id === techId) {
-          return { ...t, certifications: [...t.certifications, cert] };
+      try {
+        const tech = technicians.find(t => t.id === techId);
+        if (tech) {
+          await updateTechAPI(techId, { certifications: [...tech.certifications, cert] });
+          onRefresh(); // Reload from cloud
         }
-        return t;
-      });
-      onUpdate(updated);
+      } catch (err) {
+        console.error('Failed to add certification:', err);
+        alert('Failed to add certification. Please try again.');
+      }
     }
   };
 
@@ -147,7 +154,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({
                     </svg>
                   </button>
                   <button
-                    onClick={() => deleteTechnician(tech.id)}
+                    onClick={() => handleDeleteTechnician(tech.id)}
                     className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                     title="Delete Profile"
                   >
@@ -182,8 +189,8 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({
               <button
                 onClick={() => onSelect(activeTechId === tech.id ? null : tech.id)}
                 className={`w-full py-3 rounded-xl font-black uppercase text-xs tracking-widest transition-all ${activeTechId === tech.id
-                    ? 'bg-emerald-600 text-white shadow-md'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  ? 'bg-emerald-600 text-white shadow-md'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
               >
                 {activeTechId === tech.id ? 'Active for Testing' : 'Select for Testing'}
@@ -247,8 +254,8 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({
                       <div key={res.id || i} className="p-5 bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col md:flex-row justify-between items-center gap-4 hover:border-blue-200 transition-colors">
                         <div className="flex items-center gap-4">
                           <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-white ${res.percentage >= 90 ? 'bg-indigo-600' :
-                              res.percentage >= 75 ? 'bg-emerald-600' :
-                                res.percentage >= 50 ? 'bg-sky-600' : 'bg-orange-500'
+                            res.percentage >= 75 ? 'bg-emerald-600' :
+                              res.percentage >= 50 ? 'bg-sky-600' : 'bg-orange-500'
                             }`}>
                             {res.percentage}%
                           </div>

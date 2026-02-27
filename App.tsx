@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { SystemCategory, Question, Technician, EvaluationResult } from './types';
 import { generateQuestionsForCategory } from './services/geminiService';
+import { loadTechnicians as loadTechniciansFromCloud, saveResult as saveResultToCloud } from './services/dataService';
 import Dashboard from './components/Dashboard';
 import Quiz from './components/Quiz';
 import Results from './components/Results';
@@ -47,15 +48,12 @@ const App: React.FC = () => {
     });
     setLibraryStats(stats);
 
-    // Load Technicians
-    const savedTechs = localStorage.getItem('3dts_technicians');
-    if (savedTechs) {
-      try {
-        setTechnicians(JSON.parse(savedTechs));
-      } catch (e) {
-        console.error('Failed to parse technicians data', e);
-      }
-    }
+    // Load Technicians from cloud API
+    loadTechniciansFromCloud().then(techs => {
+      setTechnicians(techs);
+    }).catch(err => {
+      console.error('Failed to load technicians:', err);
+    });
 
     const lastActive = localStorage.getItem('3dts_active_tech_id');
     if (lastActive) setActiveTechId(lastActive);
@@ -77,6 +75,14 @@ const App: React.FC = () => {
   const saveTechnicians = (updated: Technician[]) => {
     setTechnicians(updated);
     localStorage.setItem('3dts_technicians', JSON.stringify(updated));
+  };
+
+  const refreshTechnicians = () => {
+    loadTechniciansFromCloud().then(techs => {
+      setTechnicians(techs);
+    }).catch(err => {
+      console.error('Failed to refresh technicians:', err);
+    });
   };
 
   const startEvaluation = async (category: SystemCategory) => {
@@ -106,20 +112,25 @@ const App: React.FC = () => {
     setCurrentView('results');
   };
 
-  const saveResultToProfile = (result: EvaluationResult) => {
+  const saveResultToProfile = async (result: EvaluationResult) => {
     if (!activeTechId) return;
 
-    const updated = technicians.map(t => {
-      if (t.id === activeTechId) {
-        return {
-          ...t,
-          lastEvaluated: new Date().toISOString(),
-          results: [result, ...t.results]
-        };
-      }
-      return t;
-    });
-    saveTechnicians(updated);
+    try {
+      await saveResultToCloud(activeTechId, result);
+      // Update local state to reflect the change
+      setTechnicians(prev => prev.map(t => {
+        if (t.id === activeTechId) {
+          return {
+            ...t,
+            lastEvaluated: new Date().toISOString(),
+            results: [result, ...t.results]
+          };
+        }
+        return t;
+      }));
+    } catch (err) {
+      console.error('Failed to save result:', err);
+    }
   };
 
   const resetToDashboard = () => {
@@ -250,6 +261,7 @@ const App: React.FC = () => {
                   localStorage.setItem('3dts_active_tech_id', id || '');
                 }}
                 onUpdate={saveTechnicians}
+                onRefresh={refreshTechnicians}
                 onClearLibrary={clearLibrary}
               />
             )}
