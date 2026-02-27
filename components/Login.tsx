@@ -25,7 +25,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         }
 
         if (!email.trim().toLowerCase().endsWith('@3dtsi.com')) {
-            setError('Access denied. Your email is not authorized for this system.');
+            setError('Access denied. You are not authorized for this system.');
             return;
         }
 
