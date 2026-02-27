@@ -39,6 +39,7 @@ export interface EvaluationResult {
     [key in Difficulty]: { correct: number; total: number };
   };
   analysis?: string;
+  tabSwitchCount?: number;
 }
 
 export interface Technician {

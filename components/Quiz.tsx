@@ -6,7 +6,7 @@ import { DIFFICULTY_COLORS, SYSTEM_THEMES } from '../constants';
 interface QuizProps {
   category: SystemCategory;
   questions: Question[];
-  onComplete: (answers: { [key: string]: number }) => void;
+  onComplete: (answers: { [key: string]: number }, tabSwitchCount: number) => void;
 }
 
 const SECONDS_PER_QUESTION = 45;
@@ -17,15 +17,69 @@ const Quiz: React.FC<QuizProps> = ({ category, questions, onComplete }) => {
   const [timeLeft, setTimeLeft] = useState(SECONDS_PER_QUESTION);
   const [totalElapsed, setTotalElapsed] = useState(0);
   const [isTimedOut, setIsTimedOut] = useState(false);
+  const [tabSwitchCount, setTabSwitchCount] = useState(0);
+  const [showTabWarning, setShowTabWarning] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const totalTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const answersRef = useRef(answers);
+  const tabSwitchRef = useRef(0);
 
   // Keep ref in sync with latest answers
   useEffect(() => { answersRef.current = answers; }, [answers]);
 
   const currentQuestion = questions[currentIndex];
   const progress = ((currentIndex + 1) / questions.length) * 100;
+
+  // ── Anti-cheat: Detect tab/window switches ──
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        tabSwitchRef.current += 1;
+        setTabSwitchCount(tabSwitchRef.current);
+        setShowTabWarning(true);
+        setTimeout(() => setShowTabWarning(false), 5000);
+      }
+    };
+
+    const handleBlur = () => {
+      tabSwitchRef.current += 1;
+      setTabSwitchCount(tabSwitchRef.current);
+      setShowTabWarning(true);
+      setTimeout(() => setShowTabWarning(false), 5000);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    // Note: we only use visibilitychange to avoid double-counting
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
+  // ── Anti-cheat: Block copy/paste/right-click ──
+  useEffect(() => {
+    const blockEvent = (e: Event) => { e.preventDefault(); return false; };
+    const blockKeys = (e: KeyboardEvent) => {
+      // Block Ctrl+C, Ctrl+V, Ctrl+A, Ctrl+X
+      if ((e.ctrlKey || e.metaKey) && ['c', 'v', 'a', 'x'].includes(e.key.toLowerCase())) {
+        e.preventDefault();
+        return false;
+      }
+    };
+
+    document.addEventListener('copy', blockEvent);
+    document.addEventListener('paste', blockEvent);
+    document.addEventListener('cut', blockEvent);
+    document.addEventListener('contextmenu', blockEvent);
+    document.addEventListener('keydown', blockKeys);
+
+    return () => {
+      document.removeEventListener('copy', blockEvent);
+      document.removeEventListener('paste', blockEvent);
+      document.removeEventListener('cut', blockEvent);
+      document.removeEventListener('contextmenu', blockEvent);
+      document.removeEventListener('keydown', blockKeys);
+    };
+  }, []);
 
   // Per-question countdown
   useEffect(() => {
@@ -67,7 +121,7 @@ const Quiz: React.FC<QuizProps> = ({ category, questions, onComplete }) => {
         if (currentIndex < questions.length - 1) {
           setCurrentIndex(currentIndex + 1);
         } else {
-          onComplete(answersRef.current);
+          onComplete(answersRef.current, tabSwitchRef.current);
         }
       }, 1500); // brief pause so they see "TIME'S UP"
       return () => clearTimeout(timeout);
@@ -84,7 +138,7 @@ const Quiz: React.FC<QuizProps> = ({ category, questions, onComplete }) => {
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(currentIndex + 1);
     } else {
-      onComplete(answers);
+      onComplete(answers, tabSwitchRef.current);
     }
   };
 
@@ -107,7 +161,22 @@ const Quiz: React.FC<QuizProps> = ({ category, questions, onComplete }) => {
   if (!currentQuestion) return <div>No questions available.</div>;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-6" style={{ userSelect: 'none', WebkitUserSelect: 'none' }}>
+      {/* Tab switch warning banner */}
+      {showTabWarning && (
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="flex items-center gap-3 px-6 py-4 bg-rose-600 text-white rounded-xl shadow-2xl border-2 border-rose-400">
+            <svg className="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div>
+              <p className="font-black text-sm uppercase tracking-wider">Screen Exit Detected</p>
+              <p className="text-rose-200 text-xs mt-0.5">Leaving the test screen is logged and reported to management. ({tabSwitchCount} recorded)</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         {/* Category progress bar */}
         <div className={`h-1.5 ${SYSTEM_THEMES[category]}`} style={{ width: `${progress}%`, transition: 'width 0.3s ease-in-out' }} />
@@ -119,6 +188,15 @@ const Quiz: React.FC<QuizProps> = ({ category, questions, onComplete }) => {
               Question {currentIndex + 1} of {questions.length}
             </span>
             <div className="flex items-center gap-3">
+              {/* Tab switch indicator */}
+              {tabSwitchCount > 0 && (
+                <div className="flex items-center gap-1.5 px-3 py-1 bg-rose-50 border border-rose-200 rounded-lg">
+                  <svg className="w-3.5 h-3.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01" />
+                  </svg>
+                  <span className="text-xs font-bold text-rose-600">{tabSwitchCount} exit{tabSwitchCount !== 1 ? 's' : ''}</span>
+                </div>
+              )}
               {/* Total elapsed */}
               <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-100 rounded-lg">
                 <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

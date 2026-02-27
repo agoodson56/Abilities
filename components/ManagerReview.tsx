@@ -298,6 +298,21 @@ const ManagerReview: React.FC<ManagerReviewProps> = ({ technicians }) => {
                             </span>
                         </div>
 
+                        {/* Tab Switch Warning */}
+                        {selectedResult.tabSwitchCount != null && selectedResult.tabSwitchCount > 0 && (
+                            <div className="flex items-center gap-3 p-4 bg-rose-50 border-2 border-rose-200 rounded-xl">
+                                <svg className="w-5 h-5 text-rose-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                <div>
+                                    <p className="text-sm font-black text-rose-700 uppercase tracking-wider">Integrity Alert</p>
+                                    <p className="text-xs text-rose-600 mt-0.5">
+                                        Technician left the test screen <span className="font-black">{selectedResult.tabSwitchCount}</span> time{selectedResult.tabSwitchCount !== 1 ? 's' : ''} during this evaluation. Results may be compromised.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Breakdown */}
                         <div>
                             <h4 className="font-black text-slate-900 text-sm border-b pb-2 uppercase tracking-[0.2em] mb-4">Proficiency Breakdown</h4>

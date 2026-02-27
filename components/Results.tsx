@@ -13,9 +13,10 @@ interface ResultsProps {
   onSaveToProfile: (result: EvaluationResult) => void;
   isSaved: boolean;
   loggedInUser: { name: string; email: string };
+  tabSwitchCount?: number;
 }
 
-const Results: React.FC<ResultsProps> = ({ category, questions, answers, onReset, onSaveToProfile, isSaved, loggedInUser }) => {
+const Results: React.FC<ResultsProps> = ({ category, questions, answers, onReset, onSaveToProfile, isSaved, loggedInUser, tabSwitchCount = 0 }) => {
   const [analysis, setAnalysis] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(true);
   const [hasSaved, setHasSaved] = useState(false);
@@ -81,7 +82,8 @@ const Results: React.FC<ResultsProps> = ({ category, questions, answers, onReset
       totalQuestions: total,
       level: rank.title,
       breakdown: breakdown,
-      analysis: analysis || undefined
+      analysis: analysis || undefined,
+      tabSwitchCount: tabSwitchCount > 0 ? tabSwitchCount : undefined
     });
     setHasSaved(true);
   }, [isAnalyzing, hasSaved, isSaved]);

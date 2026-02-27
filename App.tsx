@@ -17,6 +17,7 @@ const App: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<SystemCategory | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [userAnswers, setUserAnswers] = useState<{ [key: string]: number }>({});
+  const [tabSwitchCount, setTabSwitchCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
   // Technician State
@@ -116,8 +117,9 @@ const App: React.FC = () => {
     }
   };
 
-  const handleQuizComplete = (answers: { [key: string]: number }) => {
+  const handleQuizComplete = (answers: { [key: string]: number }, switches: number = 0) => {
     setUserAnswers(answers);
+    setTabSwitchCount(switches);
     setCurrentView('results');
   };
 
@@ -301,6 +303,7 @@ const App: React.FC = () => {
                 onSaveToProfile={saveResultToProfile}
                 isSaved={!!activeTechId}
                 loggedInUser={loggedInUser}
+                tabSwitchCount={tabSwitchCount}
               />
             )}
           </>

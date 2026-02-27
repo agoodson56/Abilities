@@ -165,13 +165,17 @@ function shuffleArray<T>(array: T[]): T[] {
 
 // ── Public API ────────────────────────────────────────────────────
 
+const QUESTIONS_PER_QUIZ = 40;
+
 /**
- * Returns shuffled questions for a category — instant, zero API calls.
+ * Returns a random selection of questions for a category — instant, zero API calls.
+ * Selects QUESTIONS_PER_QUIZ from the full pool so each attempt is different.
  */
 export function getQuestionsForCategory(category: SystemCategory): Question[] {
     const questions = QUESTION_BANKS[category];
     if (!questions || questions.length === 0) {
         throw new Error(`No questions found for category: ${category}`);
     }
-    return shuffleArray(questions);
+    const shuffled = shuffleArray(questions);
+    return shuffled.slice(0, QUESTIONS_PER_QUIZ);
 }
