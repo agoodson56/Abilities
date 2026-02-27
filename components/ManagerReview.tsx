@@ -26,6 +26,115 @@ const ManagerReview: React.FC<ManagerReviewProps> = ({ technicians }) => {
         }
     };
 
+    const generateReport = () => {
+        const sortedTechs = [...technicians]
+            .filter(t => t.results.length > 0)
+            .sort((a, b) => a.name.localeCompare(b.name));
+
+        const today = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+        const techRows = sortedTechs.map(tech => {
+            const avgScore = Math.round(tech.results.reduce((sum, r) => sum + r.percentage, 0) / tech.results.length);
+            const categories = [...new Set(tech.results.map(r => r.category))];
+
+            const evalRows = tech.results
+                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                .map(r => {
+                    const breakdownCells = ['Beginner', 'Intermediate', 'Advanced', 'Expert Journeyman'].map(diff => {
+                        const d = r.breakdown?.[diff as Difficulty];
+                        if (!d) return '<td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;color:#94a3b8;">—</td>';
+                        const pct = d.total > 0 ? Math.round((d.correct / d.total) * 100) : 0;
+                        return `<td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;">${d.correct}/${d.total} (${pct}%)</td>`;
+                    }).join('');
+
+                    return `<tr>
+                        <td style="padding:6px 10px;border:1px solid #e2e8f0;">${new Date(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                        <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:600;">${r.category}</td>
+                        <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;font-weight:700;color:${r.percentage >= 75 ? '#059669' : r.percentage >= 50 ? '#d97706' : '#dc2626'};">${r.percentage}%</td>
+                        <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;">${r.score}/${r.totalQuestions}</td>
+                        <td style="padding:6px 10px;border:1px solid #e2e8f0;">${r.level || 'N/A'}</td>
+                        ${breakdownCells}
+                    </tr>`;
+                }).join('');
+
+            const dispatchStatus = avgScore >= 90 ? '✅ Elite — Lead Tech Ready'
+                : avgScore >= 75 ? '✅ Advanced — Standard Dispatch'
+                    : avgScore >= 50 ? '⚠️ Qualified — Supervised Only'
+                        : '❌ Developing — Not Dispatch Ready';
+
+            return `
+                <div style="page-break-inside:avoid;margin-bottom:32px;">
+                    <div style="background:#1e293b;color:white;padding:14px 20px;border-radius:8px 8px 0 0;display:flex;justify-content:space-between;align-items:center;">
+                        <div>
+                            <h2 style="margin:0;font-size:18px;font-weight:800;">${tech.name}</h2>
+                            <p style="margin:4px 0 0;font-size:11px;color:#94a3b8;">Joined ${new Date(tech.joinedDate).toLocaleDateString()} • ${tech.results.length} evaluation${tech.results.length !== 1 ? 's' : ''} • Categories: ${categories.join(', ')}</p>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:28px;font-weight:900;color:${avgScore >= 75 ? '#34d399' : avgScore >= 50 ? '#fbbf24' : '#f87171'};">${avgScore}%</div>
+                            <div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;">Avg Score</div>
+                        </div>
+                    </div>
+                    <div style="padding:4px 20px 8px;background:#f8fafc;border:1px solid #e2e8f0;font-size:12px;font-weight:700;color:${avgScore >= 75 ? '#059669' : avgScore >= 50 ? '#d97706' : '#dc2626'};">
+                        Dispatch Status: ${dispatchStatus}
+                    </div>
+                    <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                        <thead>
+                            <tr style="background:#f1f5f9;">
+                                <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:left;font-weight:700;font-size:10px;text-transform:uppercase;color:#64748b;">Date</th>
+                                <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:left;font-weight:700;font-size:10px;text-transform:uppercase;color:#64748b;">Category</th>
+                                <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:center;font-weight:700;font-size:10px;text-transform:uppercase;color:#64748b;">Score</th>
+                                <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:center;font-weight:700;font-size:10px;text-transform:uppercase;color:#64748b;">Correct</th>
+                                <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:left;font-weight:700;font-size:10px;text-transform:uppercase;color:#64748b;">Level</th>
+                                <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:center;font-weight:700;font-size:10px;text-transform:uppercase;color:#64748b;">Beginner</th>
+                                <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:center;font-weight:700;font-size:10px;text-transform:uppercase;color:#64748b;">Intermediate</th>
+                                <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:center;font-weight:700;font-size:10px;text-transform:uppercase;color:#64748b;">Advanced</th>
+                                <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:center;font-weight:700;font-size:10px;text-transform:uppercase;color:#64748b;">Expert</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${evalRows}
+                        </tbody>
+                    </table>
+                </div>`;
+        }).join('');
+
+        const reportHtml = `<!DOCTYPE html>
+<html><head><title>Technician Competency Report — ${today}</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; padding: 40px; color: #1e293b; font-size: 13px; }
+    @media print {
+        body { padding: 20px; }
+        .no-print { display: none !important; }
+        @page { margin: 0.5in; }
+    }
+</style></head><body>
+    <div style="text-align:center;margin-bottom:32px;border-bottom:3px solid #1e293b;padding-bottom:20px;">
+        <h1 style="font-size:24px;font-weight:900;letter-spacing:-0.5px;">3D Technology Services</h1>
+        <p style="font-size:12px;color:#3b82f6;font-weight:700;text-transform:uppercase;letter-spacing:2px;margin-top:4px;">Technician Competency Report</p>
+        <p style="font-size:11px;color:#94a3b8;margin-top:8px;">Generated: ${today} • ${sortedTechs.length} technician${sortedTechs.length !== 1 ? 's' : ''} with evaluations on record</p>
+    </div>
+
+    <div class="no-print" style="text-align:center;margin-bottom:24px;">
+        <button onclick="window.print()" style="background:#1e293b;color:white;border:none;padding:12px 32px;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;font-family:Inter,sans-serif;">🖨️ Print / Save as PDF</button>
+    </div>
+
+    ${sortedTechs.length === 0 ? '<p style="text-align:center;color:#94a3b8;padding:40px;">No technicians have completed evaluations yet.</p>' : techRows}
+
+    <div style="text-align:center;margin-top:40px;padding-top:20px;border-top:2px solid #e2e8f0;font-size:10px;color:#94a3b8;">
+        <p>3D Technology Services — Confidential Personnel Report</p>
+        <p>Generated from the Technical Mastery Portal • ${today}</p>
+    </div>
+</body></html>`;
+
+        const reportWindow = window.open('', '_blank');
+        if (reportWindow) {
+            reportWindow.document.write(reportHtml);
+            reportWindow.document.close();
+        }
+    };
+
     // ── Password Gate ──
     if (!isAuthenticated) {
         return (
@@ -112,8 +221,8 @@ const ManagerReview: React.FC<ManagerReviewProps> = ({ technicians }) => {
                         <div className="flex items-center gap-3">
                             <span className="text-xs font-black uppercase tracking-widest text-slate-400">Competency Level:</span>
                             <span className={`px-4 py-1.5 rounded-full text-sm font-black uppercase ${selectedResult.percentage >= 90 ? 'bg-indigo-100 text-indigo-700' :
-                                    selectedResult.percentage >= 75 ? 'bg-emerald-100 text-emerald-700' :
-                                        selectedResult.percentage >= 50 ? 'bg-sky-100 text-sky-700' : 'bg-orange-100 text-orange-700'
+                                selectedResult.percentage >= 75 ? 'bg-emerald-100 text-emerald-700' :
+                                    selectedResult.percentage >= 50 ? 'bg-sky-100 text-sky-700' : 'bg-orange-100 text-orange-700'
                                 }`}>
                                 {selectedResult.level}
                             </span>
@@ -136,8 +245,8 @@ const ManagerReview: React.FC<ManagerReviewProps> = ({ technicians }) => {
                                             <div className="h-2.5 bg-slate-200 rounded-full overflow-hidden">
                                                 <div
                                                     className={`h-full rounded-full transition-all duration-1000 ${diff === Difficulty.EXPERT_JOURNEYMAN ? 'bg-rose-500' :
-                                                            diff === Difficulty.ADVANCED ? 'bg-orange-500' :
-                                                                diff === Difficulty.INTERMEDIATE ? 'bg-sky-500' : 'bg-emerald-500'
+                                                        diff === Difficulty.ADVANCED ? 'bg-orange-500' :
+                                                            diff === Difficulty.INTERMEDIATE ? 'bg-sky-500' : 'bg-emerald-500'
                                                         }`}
                                                     style={{ width: `${pct}%` }}
                                                 />
@@ -150,7 +259,7 @@ const ManagerReview: React.FC<ManagerReviewProps> = ({ technicians }) => {
 
                         {/* Dispatch Recommendation */}
                         <div className={`p-5 rounded-xl border-2 ${selectedResult.percentage >= 75 ? 'bg-emerald-50 border-emerald-200' :
-                                selectedResult.percentage >= 50 ? 'bg-amber-50 border-amber-200' : 'bg-rose-50 border-rose-200'
+                            selectedResult.percentage >= 50 ? 'bg-amber-50 border-amber-200' : 'bg-rose-50 border-rose-200'
                             }`}>
                             <h4 className="font-black text-sm uppercase tracking-widest mb-2 flex items-center gap-2">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -229,8 +338,8 @@ const ManagerReview: React.FC<ManagerReviewProps> = ({ technicians }) => {
                             >
                                 <div className="flex items-center gap-4">
                                     <div className={`w-14 h-14 rounded-xl flex items-center justify-center font-black text-white text-lg ${result.percentage >= 90 ? 'bg-indigo-600' :
-                                            result.percentage >= 75 ? 'bg-emerald-600' :
-                                                result.percentage >= 50 ? 'bg-sky-600' : 'bg-orange-500'
+                                        result.percentage >= 75 ? 'bg-emerald-600' :
+                                            result.percentage >= 50 ? 'bg-sky-600' : 'bg-orange-500'
                                         }`}>
                                         {result.percentage}%
                                     </div>
@@ -241,8 +350,8 @@ const ManagerReview: React.FC<ManagerReviewProps> = ({ technicians }) => {
                                                 {new Date(result.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                             </span>
                                             <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${result.percentage >= 90 ? 'bg-indigo-50 text-indigo-600' :
-                                                    result.percentage >= 75 ? 'bg-emerald-50 text-emerald-600' :
-                                                        result.percentage >= 50 ? 'bg-sky-50 text-sky-600' : 'bg-orange-50 text-orange-600'
+                                                result.percentage >= 75 ? 'bg-emerald-50 text-emerald-600' :
+                                                    result.percentage >= 50 ? 'bg-sky-50 text-sky-600' : 'bg-orange-50 text-orange-600'
                                                 }`}>
                                                 {result.level}
                                             </span>
@@ -284,9 +393,20 @@ const ManagerReview: React.FC<ManagerReviewProps> = ({ technicians }) => {
                     <h2 className="text-3xl font-black text-slate-900 tracking-tight">Technician Records</h2>
                     <p className="text-slate-500">Click a technician folder to review their complete evaluation history.</p>
                 </div>
-                <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-lg">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-xs font-bold text-emerald-700">{technicians.length} Technician{technicians.length !== 1 ? 's' : ''} on File</span>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={generateReport}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all text-sm font-bold shadow-lg active:scale-[0.98]"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                        </svg>
+                        Generate Report
+                    </button>
+                    <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-lg">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="text-xs font-bold text-emerald-700">{technicians.length} Technician{technicians.length !== 1 ? 's' : ''} on File</span>
+                    </div>
                 </div>
             </div>
 
@@ -346,7 +466,7 @@ const ManagerReview: React.FC<ManagerReviewProps> = ({ technicians }) => {
                                             <div className="flex flex-wrap gap-1 pt-1">
                                                 {categoriesTested.map((cat, i) => (
                                                     <span key={i} className="px-2 py-0.5 bg-slate-50 text-slate-500 text-[10px] font-black rounded uppercase border border-slate-100">
-                                                        {cat.split(' ')[0]}
+                                                        {String(cat).split(' ')[0]}
                                                     </span>
                                                 ))}
                                             </div>
