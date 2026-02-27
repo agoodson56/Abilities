@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { SystemCategory, Question, Technician, EvaluationResult } from './types';
 import { generateQuestionsForCategory } from './services/geminiService';
-import { loadTechnicians as loadTechniciansFromCloud, saveResult as saveResultToCloud } from './services/dataService';
+import { loadTechnicians as loadTechniciansFromCloud, saveResult as saveResultToCloud, createTechnician as createTechAPI } from './services/dataService';
 import Dashboard from './components/Dashboard';
 import Quiz from './components/Quiz';
 import Results from './components/Results';
@@ -59,11 +59,33 @@ const App: React.FC = () => {
     if (lastActive) setActiveTechId(lastActive);
   }, []);
 
-  const handleLogin = (name: string, email: string) => {
+  const handleLogin = async (name: string, email: string) => {
     const user = { name, email };
     setLoggedInUser(user);
     localStorage.setItem('3dts_login', JSON.stringify(user));
     setCurrentView('dashboard');
+
+    // Auto-register as technician if they don't already exist
+    try {
+      const techs = await loadTechniciansFromCloud();
+      setTechnicians(techs);
+
+      // Check if this person already has a profile (match by name, case-insensitive)
+      const existing = techs.find(t => t.name.toLowerCase() === name.trim().toLowerCase());
+      if (existing) {
+        // Already registered — set as active tech
+        setActiveTechId(existing.id);
+        localStorage.setItem('3dts_active_tech_id', existing.id);
+      } else {
+        // New technician — auto-create profile
+        const newTech = await createTechAPI(name.trim(), email);
+        setTechnicians(prev => [...prev, newTech]);
+        setActiveTechId(newTech.id);
+        localStorage.setItem('3dts_active_tech_id', newTech.id);
+      }
+    } catch (err) {
+      console.error('Auto-register technician failed:', err);
+    }
   };
 
   const handleLogout = () => {
