@@ -25,7 +25,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         }
 
         if (!email.trim().toLowerCase().endsWith('@3dtsi.com')) {
-            setError('Access restricted to 3D Technology Services employees. Please use your @3dtsi.com email.');
+            setError('Access denied. Your email is not authorized for this system.');
             return;
         }
 
@@ -75,7 +75,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                placeholder="john.smith@3dtsi.com"
+                                placeholder="you@company.com"
                                 className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-blue-500 focus:ring-0 outline-none transition-colors text-slate-900 font-medium"
                             />
                         </div>
