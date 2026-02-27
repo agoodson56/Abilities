@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Technician, EvaluationResult, Difficulty } from '../types';
+import { Technician, EvaluationResult, Difficulty, SystemCategory } from '../types';
 import { DIFFICULTY_ORDER, DIFFICULTY_COLORS } from '../constants';
 
 interface ManagerReviewProps {
@@ -98,6 +98,74 @@ const ManagerReview: React.FC<ManagerReviewProps> = ({ technicians }) => {
                 </div>`;
         }).join('');
 
+        // ── Per-System Leaderboard ──
+        const allCategories = Object.values(SystemCategory);
+        const systemLeaderboard = allCategories.map(category => {
+            // For each tech, get their best (most recent) score in this category
+            const techScores: { name: string; percentage: number; score: number; total: number; level: string; date: string }[] = [];
+            technicians.forEach(tech => {
+                const catResults = tech.results.filter(r => r.category === category);
+                if (catResults.length > 0) {
+                    // Use best score for ranking
+                    const best = catResults.reduce((a, b) => a.percentage >= b.percentage ? a : b);
+                    techScores.push({
+                        name: tech.name,
+                        percentage: best.percentage,
+                        score: best.score,
+                        total: best.totalQuestions,
+                        level: best.level || 'N/A',
+                        date: new Date(best.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                    });
+                }
+            });
+            // Sort highest to lowest
+            techScores.sort((a, b) => b.percentage - a.percentage);
+            return { category, techScores };
+        }).filter(s => s.techScores.length > 0);
+
+        const leaderboardHtml = systemLeaderboard.length > 0 ? `
+        <div style="page-break-before:always;margin-top:40px;">
+            <div style="text-align:center;margin-bottom:28px;border-bottom:3px solid #1e293b;padding-bottom:16px;">
+                <h2 style="font-size:20px;font-weight:900;letter-spacing:-0.5px;">System Leaderboard — Dispatch Priority</h2>
+                <p style="font-size:11px;color:#64748b;margin-top:4px;">Technicians ranked by highest score per system (best attempt)</p>
+            </div>
+            ${systemLeaderboard.map(({ category, techScores }) => `
+                <div style="page-break-inside:avoid;margin-bottom:24px;">
+                    <div style="background:#1e293b;color:white;padding:10px 16px;border-radius:8px 8px 0 0;">
+                        <h3 style="margin:0;font-size:15px;font-weight:800;">${category}</h3>
+                        <p style="margin:2px 0 0;font-size:10px;color:#94a3b8;">${techScores.length} technician${techScores.length !== 1 ? 's' : ''} evaluated</p>
+                    </div>
+                    <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                        <thead>
+                            <tr style="background:#f1f5f9;">
+                                <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:center;font-weight:700;font-size:10px;text-transform:uppercase;color:#64748b;width:50px;">Rank</th>
+                                <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:left;font-weight:700;font-size:10px;text-transform:uppercase;color:#64748b;">Technician</th>
+                                <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:center;font-weight:700;font-size:10px;text-transform:uppercase;color:#64748b;">Score</th>
+                                <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:center;font-weight:700;font-size:10px;text-transform:uppercase;color:#64748b;">Correct</th>
+                                <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:left;font-weight:700;font-size:10px;text-transform:uppercase;color:#64748b;">Level</th>
+                                <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:left;font-weight:700;font-size:10px;text-transform:uppercase;color:#64748b;">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${techScores.map((ts, idx) => {
+            const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx + 1}`;
+            const rowBg = idx === 0 ? 'background:#fefce8;' : '';
+            return `<tr style="${rowBg}">
+                                    <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;font-weight:800;font-size:14px;">${medal}</td>
+                                    <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700;">${ts.name}</td>
+                                    <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;font-weight:800;color:${ts.percentage >= 75 ? '#059669' : ts.percentage >= 50 ? '#d97706' : '#dc2626'};">${ts.percentage}%</td>
+                                    <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;">${ts.score}/${ts.total}</td>
+                                    <td style="padding:6px 10px;border:1px solid #e2e8f0;">${ts.level}</td>
+                                    <td style="padding:6px 10px;border:1px solid #e2e8f0;color:#64748b;">${ts.date}</td>
+                                </tr>`;
+        }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `).join('')}
+        </div>
+    ` : '';
+
         const reportHtml = `<!DOCTYPE html>
 <html><head><title>Technician Competency Report — ${today}</title>
 <style>
@@ -121,6 +189,8 @@ const ManagerReview: React.FC<ManagerReviewProps> = ({ technicians }) => {
     </div>
 
     ${sortedTechs.length === 0 ? '<p style="text-align:center;color:#94a3b8;padding:40px;">No technicians have completed evaluations yet.</p>' : techRows}
+
+    ${leaderboardHtml}
 
     <div style="text-align:center;margin-top:40px;padding-top:20px;border-top:2px solid #e2e8f0;font-size:10px;color:#94a3b8;">
         <p>3D Technology Services — Confidential Personnel Report</p>
